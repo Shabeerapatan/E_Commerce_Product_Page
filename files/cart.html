@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Shopping Cart</title>
+    <style>
+      /* Basic styling for the page */
+      body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+      }
+      header {
+        margin-bottom: 20px;
+      }
+      .cart-summary {
+        margin-bottom: 20px;
+      }
+      .product-list {
+        list-style-type: none;
+        padding: 0;
+      }
+      .product-card {
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        padding: 10px;
+        margin-bottom: 15px;
+      }
+      .color-image {
+        display: none; /* Hide all images by default */
+      }
+      .color-image:first-of-type {
+        display: block; /* Show the first image by default */
+      }
+      .cart-items-list {
+        list-style-type: none;
+        padding: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Shopping Cart</h1>
+      <div class="cart-summary">
+        <p>Your cart contains <span id="total-items">0</span> items.</p>
+        <button id="clearCart">Clear Cart</button>
+      </div>
+    </header>
+
+    <h2>Products</h2>
+    <ul class="product-list">
+      <li>
+        <div class="product-card">
+          <figure class="card-banner">
+            <img
+              src="./product-1.jpg"
+              alt="Varsi Leather Bag Red"
+              class="color-image"
+              data-color="Red"
+            />
+            <img
+              src="./image-2.jpg"
+              alt="Varsi Leather Bag Red"
+              class="color-image"
+              data-color="Red"
+            />
+            <img
+              src="./image-3.jpg"
+              alt="Varsi Leather Bag Blue"
+              class="color-image"
+              data-color="Blue"
+            />
+            <img
+              src="./image-4.jpg"
+              alt="Varsi Leather Bag Black"
+              class="color-image"
+              data-color="Black"
+            />
+          </figure>
+          <div class="card-content">
+            <h3 class="h4 card-title">
+              <a href="#">Varsi Leather Bag</a>
+            </h3>
+            <div class="card-price">
+              <data value="48.75">&pound;48.75</data>
+            </div>
+            <label for="color">Color:</label>
+            <select class="color-selector">
+              <option value="Red">Red</option>
+              <option value="Blue">Blue</option>
+              <option value="Black">Black</option>
+            </select>
+            <label for="size">Size:</label>
+            <select class="size-selector">
+              <option value="Small">Small</option>
+              <option value="Medium">Medium</option>
+              <option value="Large">Large</option>
+            </select>
+            <button class="cart-btn">Add to Cart</button>
+          </div>
+        </div>
+      </li>
+    </ul>
+
+    <h2>Your Cart</h2>
+    <ul id="cartItemsList" class="cart-items-list">
+      <!-- Cart items will be dynamically inserted here -->
+    </ul>
+
+    <footer>
+      <a href="index.html">Continue Shopping</a>
+    </footer>
+
+    <script>
+      // Retrieve cart data from localStorage
+      let cart = JSON.parse(localStorage.getItem("cart")) || [];
+
+      // Function to update the display of cart items
+      function displayCart() {
+        const cartItemsList = document.getElementById("cartItemsList");
+        const totalItemsCount = document.getElementById("total-items");
+
+        // Clear the current list
+        cartItemsList.innerHTML = "";
+
+        // Update total items count
+        totalItemsCount.textContent = cart.length;
+
+        // If the cart is empty, show a message
+        if (cart.length === 0) {
+          cartItemsList.innerHTML = "<li>Your cart is empty.</li>";
+        } else {
+          // Loop through cart items and display each item in the list
+          cart.forEach((item, index) => {
+            const listItem = document.createElement("li");
+            listItem.innerHTML = `
+                        <img src="${item.image}" alt="${item.title}" style="width: 50px; height: auto; margin-right: 10px;"/>
+                        ${item.title} - £${item.price} 
+                        <br>Color: ${item.color} | Size: ${item.size}
+                        <button class="remove-item" data-index="${index}">Remove</button>
+                    `;
+            cartItemsList.appendChild(listItem);
+          });
+
+          // Add event listeners to the remove buttons
+          document.querySelectorAll(".remove-item").forEach((button) => {
+            button.addEventListener("click", removeFromCart);
+          });
+        }
+      }
+
+      // Function to remove item from cart
+      function removeFromCart(event) {
+        const index = event.target.getAttribute("data-index"); // Get the index of the item to remove
+        cart.splice(index, 1); // Remove the item from the cart array
+        localStorage.setItem("cart", JSON.stringify(cart)); // Update localStorage
+        displayCart(); // Re-display the cart
+      }
+
+      // Function to clear the cart
+      function clearCart() {
+        cart = []; // Clear the cart array
+        localStorage.setItem("cart", JSON.stringify(cart)); // Update localStorage
+        displayCart(); // Re-display the cart (now empty)
+      }
+
+      // Add event listener to clear cart button
+      document.getElementById("clearCart").addEventListener("click", clearCart);
+
+      // Add event listeners for add to cart buttons
+      document.querySelectorAll(".cart-btn").forEach((button) => {
+        button.addEventListener("click", function () {
+          // Find the product card that the button belongs to
+          const productCard = this.closest(".product-card");
+
+          // Extract product title, price, and image URL from the product card
+          const productTitle =
+            productCard.querySelector(".card-title a").textContent;
+          const productPrice =
+            productCard.querySelector(".card-price data").value;
+          const productColor =
+            productCard.querySelector(".color-selector").value; // Get selected color
+          const productSize = productCard.querySelector(".size-selector").value; // Get selected size
+
+          // Get the currently visible image based on the selected color
+          const colorImages = productCard.querySelectorAll(".color-image");
+          let productImage = "";
+          colorImages.forEach((img) => {
+            if (img.getAttribute("data-color") === productColor) {
+              productImage = img.src; // Set the image URL for the selected color
+            }
+          });
+
+          // Call the function to add this product to the cart
+          addToCart(
+            productTitle,
+            productPrice,
+            productImage,
+            productColor,
+            productSize
+          );
+        });
+      });
+
+      // Function to add product to the cart
+      function addToCart(
+        productTitle,
+        productPrice,
+        productImage,
+        productColor,
+        productSize
+      ) {
+        // Add the product object to the cart array
+        cart.push({
+          title: productTitle,
+          price: productPrice,
+          image: productImage, // Store the image URL as well
+          color: productColor, // Store the selected color
+          size: productSize, // Store the selected size
+        });
+
+        // Save the updated cart to localStorage
+        localStorage.setItem("cart", JSON.stringify(cart));
+
+        // Update the cart badge to reflect the new cart size
+        displayCart();
+        alert(`${productTitle} has been added to the cart.`);
+      }
+
+      // Function to update the displayed image based on the selected color
+      function updateImageBasedOnColor(selector) {
+        const selectedColor = selector.value; // Get selected color
+        const productCard = selector.closest(".product-card"); // Find the closest product card
+        const colorImages = productCard.querySelectorAll(".color-image"); // Get all color images
+
+        // Loop through images and show/hide based on selected color
+        colorImages.forEach((img) => {
+          img.style.display =
+            img.getAttribute("data-color") === selectedColor ? "block" : "none";
+        });
+      }
+
+      // Add event listeners for the color selector
+      document.querySelectorAll(".color-selector").forEach((selector) => {
+        selector.addEventListener("change", function () {
+          updateImageBasedOnColor(this);
+        });
+      });
+
+      // Initial call to display the cart items
+      displayCart();
+    </script>
+  </body>
+</html>
